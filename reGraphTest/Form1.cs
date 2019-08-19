@@ -19,74 +19,74 @@ using AeoGraphing.Charting.ColorGenerators;
 
 namespace AeoGraphingTest
 {
-  public class FontConverter : JsonConverter<Font>
-  {
-    public override Font ReadJson(JsonReader reader, Type objectType, Font existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public class FontConverter : JsonConverter<Font>
     {
-      var value = ((string)reader.Value).Split(',');
-      return new Font(value[0], float.Parse(value[1]));
+        public override Font ReadJson(JsonReader reader, Type objectType, Font existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            var value = ((string)reader.Value).Split(',');
+            return new Font(value[0], float.Parse(value[1]));
+        }
+
+        public override void WriteJson(JsonWriter writer, Font value, JsonSerializer serializer)
+        {
+            writer.WriteValue($"{value.Name}, {value.Size}");
+        }
     }
 
-    public override void WriteJson(JsonWriter writer, Font value, JsonSerializer serializer)
+    public class MeasureConverter : JsonConverter<Measure>
     {
-      writer.WriteValue($"{value.Name}, {value.Size}");
-    }
-  }
+        public override Measure ReadJson(JsonReader reader, Type objectType, Measure existingValue, bool hasExistingValue, JsonSerializer serializer)
+        {
+            if (objectType != typeof(Measure))
+                return null;
 
-  public class MeasureConverter : JsonConverter<Measure>
-  {
-    public override Measure ReadJson(JsonReader reader, Type objectType, Measure existingValue, bool hasExistingValue, JsonSerializer serializer)
-    {
-      if (objectType != typeof(Measure))
-        return null;
+            return Measure.FromString((string)reader.Value);
+        }
 
-      return Measure.FromString((string)reader.Value);
-    }
-
-    public override void WriteJson(JsonWriter writer, Measure value, JsonSerializer serializer)
-    {
-      writer.WriteValue(value.ToString());
-    }
-  }
-
-  public class ColorHexConverter : JsonConverter
-  {
-
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-    {
-      var color = (Color)value;
-      var hexString = color.IsEmpty ? string.Empty : string.Concat("#", (color.ToArgb() & 0xFFFFFFFF).ToString("X8"));
-      writer.WriteValue(hexString);
+        public override void WriteJson(JsonWriter writer, Measure value, JsonSerializer serializer)
+        {
+            writer.WriteValue(value.ToString());
+        }
     }
 
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    public class ColorHexConverter : JsonConverter
     {
-      var hexString = (string)reader.Value;
-      if (hexString == null || !hexString.StartsWith("#")) return Color.Empty;
-      return ColorTranslator.FromHtml(hexString);
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        {
+            var color = (Color)value;
+            var hexString = color.IsEmpty ? string.Empty : string.Concat("#", (color.ToArgb() & 0xFFFFFFFF).ToString("X8"));
+            writer.WriteValue(hexString);
+        }
+
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        {
+            var hexString = (string)reader.Value;
+            if (hexString == null || !hexString.StartsWith("#")) return Color.Empty;
+            return ColorTranslator.FromHtml(hexString);
+        }
+
+        public override bool CanConvert(Type objectType)
+        {
+            return objectType == typeof(Color);
+        }
     }
 
-    public override bool CanConvert(Type objectType)
+    public class MessageLog : IDateable
     {
-      return objectType == typeof(Color);
+        public DateTime DateTime { get; set; }
+        public double Sentiment { get; set; }
+        public string Message { get; set; }
     }
-  }
 
-  public class MessageLog : IDateable
-  {
-    public DateTime DateTime { get; set; }
-    public double Sentiment { get; set; }
-    public string Message { get; set; }
-  }
-
-  public partial class Form1 : Form
-  {
-    LineChartStyle _sdStyle;
-    LineChartStyle _dfStyle;
-    DataCollection _data;
-    public Form1()
+    public partial class Form1 : Form
     {
-      var data = new Dictionary<DateTime, double>
+        LineChartStyle _sdStyle;
+        LineChartStyle _dfStyle;
+        DataCollection _data;
+        public Form1()
+        {
+            var data = new Dictionary<DateTime, double>
       {
         {DateTime.Parse("2019-07-12 21:37:57"),0.792523},
         {DateTime.Parse("2019-07-12 21:40:39"),0.549819},
@@ -160,155 +160,162 @@ namespace AeoGraphingTest
         {DateTime.Parse("2019-07-15 10:10:16"),0.71457},
       };
 
-      var random = new Random();
-      List<MessageLog> logs = data.Select(x => new MessageLog { DateTime = x.Key, Sentiment = x.Value, Message = new string('a', random.Next(5, 50)) }).ToList();
-      var query = new DataQuery(logs);
-      _data = query.Query("count(),avg(sentiment)*10,avg(message.length),sum(message.length)/10 | 2:0:0 since 12.7.2019 options Theme=DarkTheme,DateFormat=hh:MM:ss", "Messages", out var options);
-      _data.MaxValue = ((int)Math.Ceiling(_data.MaxValue / 10.0) * 10);
+            var random = new Random();
+            List<MessageLog> logs = data.Select(x => new MessageLog { DateTime = x.Key, Sentiment = x.Value, Message = new string('a', random.Next(5, 50)) }).ToList();
+            var query = new DataQuery(logs);
+            _data = query.Query("count(),avg(sentiment)*10,avg(message.length),sum(message.length)/10 | 2:0:0 since 12.7.2019 options Theme=DarkTheme,DateFormat=hh:MM:ss", "Messages", out var options);
+            _data.MaxValue = ((int)Math.Ceiling(_data.MaxValue / 10.0) * 10);
+            _data.GroupingInterval = TimeSpan.FromDays(1).Ticks;
+            _data.DataGroupNames.AddRange(data.Keys.Select(x => x.ToString("dd.yyyy")).Distinct());
+            var dt = data.Keys.Max();
+            _data.MaxBaseValue = new DateTime(dt.Year, dt.Month, dt.Day, 23, 0, 0).Ticks;
 
+            InitializeComponent();
+            var sdStyle = LineChart.DefaultStyle;
+            sdStyle.Padding = 20;
+            sdStyle.BackgroundColor = Color.FromArgb(44, 49, 53);
+            sdStyle.TextColor = Color.AntiqueWhite;
+            sdStyle.ThinLineStyle.Color = Color.FromArgb(111, 197, 238);
+            sdStyle.ThinLineStyle.Type = LineType.Dashed;
+            sdStyle.AxisLineStyle.Color = Color.FromArgb(90, 120, 255);
+            sdStyle.AxisTicksLineStyle.Color = Color.FromArgb(90, 120, 255);
+            sdStyle.TextColor = Color.FromArgb(255, 200, 0);
+            sdStyle.DataCaptionFont = new Font("Arial", 12F);
+            sdStyle.DrawAxisHelpLine = Axis2D.AxisY | Axis2D.AxisX;
+            sdStyle.DrawDescription = true;
+            sdStyle.DrawTitle = true;
+            sdStyle.DataConnectionLineStyle.Color = /*Color.FromArgb(25, 200, 46)*/ Color.Transparent;
+            sdStyle.DataDotStyle.Border.Color = /*Color.FromArgb(25, 200, 46)*/ Color.Transparent;
+            sdStyle.DataDotStyle.Border.Width = 5;
+            sdStyle.DataDotStyle.Color = Color.LightGray;
+            sdStyle.DataDotStyle.Width = 3;
+            sdStyle.DataLabelPadding = 10;
+            sdStyle.DataColors = new PastelGenerator(Color.Gray);
+            sdStyle.AxisYPosition = new Measure(0.07F, MeasureType.Percentage);
+            sdStyle.AxisXPosition = new Measure(0.20F, MeasureType.Percentage);
+            sdStyle.DataLabelsPosition = new Measure(0.15F, MeasureType.Percentage);
+            var settings = new JsonSerializerSettings { Formatting = Formatting.Indented, Converters = new JsonConverter[] { new MeasureConverter(), new ColorHexConverter(), new StringEnumConverter(), new FontConverter() }, TypeNameHandling = TypeNameHandling.Auto };
+            var json = JsonConvert.SerializeObject(SlateStyle, settings);
 
-      InitializeComponent();
-      var sdStyle = LineChart.DefaultStyle;
-      sdStyle.Padding = 20;
-      sdStyle.BackgroundColor = Color.FromArgb(44, 49, 53);
-      sdStyle.TextColor = Color.AntiqueWhite;
-      sdStyle.ThinLineStyle.Color = Color.FromArgb(111, 197, 238);
-      sdStyle.ThinLineStyle.Type = LineType.Dashed;
-      sdStyle.AxisLineStyle.Color = Color.FromArgb(90, 120, 255);
-      sdStyle.AxisTicksLineStyle.Color = Color.FromArgb(90, 120, 255);
-      sdStyle.TextColor = Color.FromArgb(255, 200, 0);
-      sdStyle.DataCaptionFont = new Font("Arial", 12F);
-      sdStyle.DrawAxisHelpLine = Axis2D.AxisY | Axis2D.AxisX;
-      sdStyle.DrawDescription = true;
-      sdStyle.DrawTitle = true;
-      sdStyle.DataConnectionLineStyle.Color = /*Color.FromArgb(25, 200, 46)*/ Color.Transparent;
-      sdStyle.DataDotStyle.Border.Color = /*Color.FromArgb(25, 200, 46)*/ Color.Transparent;
-      sdStyle.DataDotStyle.Border.Width = 5;
-      sdStyle.DataDotStyle.Color = Color.LightGray;
-      sdStyle.DataDotStyle.Width = 3;
-      sdStyle.DataLabelPadding = 10;
-      sdStyle.DataColors = new PastelGenerator(Color.Gray);
-      sdStyle.AxisYPosition = new Measure(0.07F, MeasureType.Percentage);
-      sdStyle.AxisXPosition = new Measure(0.20F, MeasureType.Percentage);
-      sdStyle.DataLabelsPosition = new Measure(0.15F, MeasureType.Percentage);
-      var settings = new JsonSerializerSettings { Formatting = Formatting.Indented, Converters = new JsonConverter[] { new MeasureConverter(), new ColorHexConverter(), new StringEnumConverter(), new FontConverter() }, TypeNameHandling = TypeNameHandling.Auto };
-      var json = JsonConvert.SerializeObject(SlateStyle, settings);
+            //sdStyle = JsonConvert.DeserializeObject<LineChartStyle>(json, settings); //  WhiteStyle;
+            _sdStyle = DarkStyle;
+            _dfStyle = LineChart.DefaultStyle;
+            draw();
+        }
 
-      //sdStyle = JsonConvert.DeserializeObject<LineChartStyle>(json, settings); //  WhiteStyle;
-      _sdStyle = SlateStyle;
-      _dfStyle = LineChart.DefaultStyle;
-      draw();
+        public static LineChartStyle SlateStyle => new LineChartStyle()
+        {
+            Padding = 10,
+            TextColor = Color.DarkSlateGray,
+            BackgroundColor = Color.SlateGray,
+            TitleFont = new Font("Arial", 28),
+            DescriptionFont = new Font("Arial", 18),
+            AxisCaptionFont = new Font("Arial", 16),
+            DataCaptionFont = new Font("Arial", 14),
+            AxisLineStyle = new LineStyle { Color = Color.DarkSlateGray, Type = LineType.Solid, Width = 2 },
+            AxisTicksLineStyle = new LineStyle { Color = Color.DarkSlateBlue, Type = LineType.Solid, Width = 2 },
+            AxisTicksLength = 5,
+            AxisXPosition = new Measure(0.15F, MeasureType.Percentage),
+            DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
+            DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.DarkSlateGray } },
+            AxisYPosition = new Measure(0.05F, MeasureType.Percentage),
+            DataCaptionPadding = 5,
+            DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
+            DataDotStyle = new BorderedShapeStyle { Color = Color.DarkSlateGray, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
+            DrawAxis = Axis2D.AxisX | Axis2D.AxisY,
+            DrawAxisCaption = Axis2D.AxisX | Axis2D.AxisY,
+            DrawAxisHelpLine = Axis2D.AxisX,
+            DrawAxisTicks = Axis2D.AxisX | Axis2D.AxisY,
+            NumericFormat = "0.00",
+            ThinLineStyle = new LineStyle { Color = Color.SlateBlue, Type = LineType.Dashed, Width = 1 },
+            DrawTitle = true,
+            DrawDescription = true,
+            DrawDataLabels = true,
+            DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
+            DataLabelSquarePadding = 5,
+            DataColors = new PastelGenerator(Color.Salmon),           
+            GroupingNameSpace = new Measure(0.05F, MeasureType.Percentage),
+            GroupLineStyle = new LineStyle { Color = Color.SlateBlue, Type = LineType.DashDotted, Width = 1 }
+        };
+
+        public static LineChartStyle WhiteStyle => new LineChartStyle()
+        {
+            Padding = 10,
+            TextColor = Color.FromArgb(54, 57, 62),
+            BackgroundColor = Color.WhiteSmoke,
+            TitleFont = new Font("Arial", 28),
+            DescriptionFont = new Font("Arial", 18),
+            AxisCaptionFont = new Font("Arial", 16),
+            DataCaptionFont = new Font("Arial", 14),
+            AxisLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Solid, Width = 2 },
+            AxisTicksLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Solid, Width = 2 },
+            AxisTicksLength = 5,
+            AxisXPosition = new Measure(0.15F, MeasureType.Percentage),
+            DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
+            DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.DarkGray } },
+            AxisYPosition = new Measure(0.05F, MeasureType.Percentage),
+            DataCaptionPadding = 5,
+            DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
+            DataDotStyle = new BorderedShapeStyle { Color = Color.LightGray, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
+            DrawAxis = Axis2D.AxisX | Axis2D.AxisY,
+            DrawAxisCaption = Axis2D.AxisX | Axis2D.AxisY,
+            DrawAxisHelpLine = Axis2D.AxisX,
+            DrawAxisTicks = Axis2D.AxisX | Axis2D.AxisY,
+            NumericFormat = "0.00",
+            ThinLineStyle = new LineStyle { Color = Color.LightGray, Type = LineType.Dashed, Width = 1 },
+            DrawTitle = true,
+            DrawDescription = true,
+            DrawDataLabels = true,
+            DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
+            DataLabelSquarePadding = 5,
+            DataColors = new PastelGenerator(Color.SlateGray),
+        };
+
+        public static LineChartStyle DarkStyle => new LineChartStyle()
+        {
+            Padding = 10,
+            TextColor = Color.WhiteSmoke,
+            BackgroundColor = Color.FromArgb(54, 57, 62),
+            TitleFont = new Font("Arial", 28),
+            DescriptionFont = new Font("Arial", 18),
+            AxisCaptionFont = new Font("Arial", 16),
+            DataCaptionFont = new Font("Arial", 14),
+            AxisLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
+            AxisTicksLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
+            AxisTicksLength = 5,
+            AxisXPosition = new Measure(0.15F, MeasureType.Percentage),
+            DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
+            DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.WhiteSmoke } },
+            AxisYPosition = new Measure(0.05F, MeasureType.Percentage),
+            DataCaptionPadding = 5,
+            DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
+            DataDotStyle = new BorderedShapeStyle { Color = Color.WhiteSmoke, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
+            DrawAxis = Axis2D.AxisX | Axis2D.AxisY,
+            DrawAxisCaption = Axis2D.AxisX | Axis2D.AxisY,
+            DrawAxisHelpLine = Axis2D.AxisX,
+            DrawAxisTicks = Axis2D.AxisX | Axis2D.AxisY,
+            NumericFormat = "0.00",
+            ThinLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Dashed, Width = 1 },
+            DrawTitle = true,
+            DrawDescription = true,
+            DrawDataLabels = true,
+            DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
+            DataLabelSquarePadding = 5,
+            DataColors = new PastelGenerator(Color.LightGray),
+            GroupingNameSpace = new Measure(0.05F, MeasureType.Percentage),
+            GroupLineStyle = new LineStyle { Color = Color.GhostWhite, Type = LineType.DashDotted, Width = 1 }
+        };
+
+        void draw()
+        {
+            var chart = new LineChart(_data, _sdStyle /*_dfStyle*/, pb1.Width, pb1.Height);
+            //chart.ValueSteps = null;
+            pb1.Image = chart.Render();
+        }
+
+        private void Pb1_SizeChanged(object sender, EventArgs e)
+        {
+            draw();
+        }
     }
-
-    public static LineChartStyle SlateStyle => new LineChartStyle()
-    {
-      Padding = 10,
-      TextColor = Color.DarkSlateGray,
-      BackgroundColor = Color.SlateGray,
-      TitleFont = new Font("Arial", 28),
-      DescriptionFont = new Font("Arial", 18),
-      AxisCaptionFont = new Font("Arial", 16),
-      DataCaptionFont = new Font("Arial", 14),
-      AxisLineStyle = new LineStyle { Color = Color.DarkSlateGray, Type = LineType.Solid, Width = 2 },
-      AxisTicksLineStyle = new LineStyle { Color = Color.DarkSlateBlue, Type = LineType.Solid, Width = 2 },
-      AxisTicksLength = 5,
-      AxisXPosition = new Measure(0.15F, MeasureType.Percentage),
-      DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
-      DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.DarkSlateGray } },
-      AxisYPosition = new Measure(0.05F, MeasureType.Percentage),
-      DataCaptionPadding = 5,
-      DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
-      DataDotStyle = new BorderedShapeStyle { Color = Color.DarkSlateGray, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
-      DrawAxis = Axis2D.AxisX | Axis2D.AxisY,
-      DrawAxisCaption = Axis2D.AxisX | Axis2D.AxisY,
-      DrawAxisHelpLine = Axis2D.AxisX,
-      DrawAxisTicks = Axis2D.AxisX | Axis2D.AxisY,
-      NumericFormat = "0.00",
-      ThinLineStyle = new LineStyle { Color = Color.SlateBlue, Type = LineType.Dashed, Width = 1 },
-      DrawTitle = true,
-      DrawDescription = true,
-      DrawDataLabels = true,
-      DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
-      DataLabelSquarePadding = 5,
-      DataColors = new PastelGenerator(Color.Salmon),
-    };
-
-    public static LineChartStyle WhiteStyle => new LineChartStyle()
-    {
-      Padding = 10,
-      TextColor = Color.FromArgb(54, 57, 62),
-      BackgroundColor = Color.WhiteSmoke,
-      TitleFont = new Font("Arial", 28),
-      DescriptionFont = new Font("Arial", 18),
-      AxisCaptionFont = new Font("Arial", 16),
-      DataCaptionFont = new Font("Arial", 14),
-      AxisLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Solid, Width = 2 },
-      AxisTicksLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Solid, Width = 2 },
-      AxisTicksLength = 5,
-      AxisXPosition = new Measure(0.15F, MeasureType.Percentage),
-      DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
-      DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.DarkGray } },
-      AxisYPosition = new Measure(0.05F, MeasureType.Percentage),
-      DataCaptionPadding = 5,
-      DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
-      DataDotStyle = new BorderedShapeStyle { Color = Color.LightGray, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
-      DrawAxis = Axis2D.AxisX | Axis2D.AxisY,
-      DrawAxisCaption = Axis2D.AxisX | Axis2D.AxisY,
-      DrawAxisHelpLine = Axis2D.AxisX,
-      DrawAxisTicks = Axis2D.AxisX | Axis2D.AxisY,
-      NumericFormat = "0.00",
-      ThinLineStyle = new LineStyle { Color = Color.LightGray, Type = LineType.Dashed, Width = 1 },
-      DrawTitle = true,
-      DrawDescription = true,
-      DrawDataLabels = true,
-      DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
-      DataLabelSquarePadding = 5,
-      DataColors = new PastelGenerator(Color.SlateGray),
-    };
-
-    public static LineChartStyle DarkStyle => new LineChartStyle()
-    {
-      Padding = 10,
-      TextColor = Color.WhiteSmoke,
-      BackgroundColor = Color.FromArgb(54, 57, 62),
-      TitleFont = new Font("Arial", 28),
-      DescriptionFont = new Font("Arial", 18),
-      AxisCaptionFont = new Font("Arial", 16),
-      DataCaptionFont = new Font("Arial", 14),
-      AxisLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
-      AxisTicksLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
-      AxisTicksLength = 5,
-      AxisXPosition = new Measure(0.15F, MeasureType.Percentage),
-      DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
-      DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.WhiteSmoke } },
-      AxisYPosition = new Measure(0.05F, MeasureType.Percentage),
-      DataCaptionPadding = 5,
-      DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
-      DataDotStyle = new BorderedShapeStyle { Color = Color.WhiteSmoke, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
-      DrawAxis = Axis2D.AxisX | Axis2D.AxisY,
-      DrawAxisCaption = Axis2D.AxisX | Axis2D.AxisY,
-      DrawAxisHelpLine = Axis2D.AxisX | Axis2D.AxisY,
-      DrawAxisTicks = Axis2D.AxisX | Axis2D.AxisY,
-      NumericFormat = "0.00",
-      ThinLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Dashed, Width = 1 },
-      DrawTitle = true,
-      DrawDescription = true,
-      DrawDataLabels = true,
-      DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
-      DataLabelSquarePadding = 5,
-      DataColors = new PastelGenerator(Color.LightGray),
-    };
-
-    void draw()
-    {
-      var chart = new LineChart(_data, _sdStyle /*_dfStyle*/, pb1.Width, pb1.Height);
-      //chart.ValueSteps = null;
-      pb1.Image = chart.Render();
-    }
-
-    private void Pb1_SizeChanged(object sender, EventArgs e)
-    {
-      draw();
-    }
-  }
 }
