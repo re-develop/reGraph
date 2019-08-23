@@ -88,6 +88,9 @@ namespace AeoGraphingTest
         {
             var data = new Dictionary<DateTime, double>
       {
+        {DateTime.Parse("2019-07-12 00:00:00"),0.671},
+        {DateTime.Parse("2019-07-12 07:14:47"),0.92341},
+        {DateTime.Parse("2019-07-12 16:32:29"),0.32412},
         {DateTime.Parse("2019-07-12 21:37:57"),0.792523},
         {DateTime.Parse("2019-07-12 21:40:39"),0.549819},
         {DateTime.Parse("2019-07-12 21:41:18"),0.361533},
@@ -158,17 +161,19 @@ namespace AeoGraphingTest
         {DateTime.Parse("2019-07-15 07:09:35"),0.71457},
         {DateTime.Parse("2019-07-15 09:45:21"),0.5},
         {DateTime.Parse("2019-07-15 10:10:16"),0.71457},
+        {DateTime.Parse("2019-07-16 02:00:00"),0.523},
+        {DateTime.Parse("2019-07-16 13:00:00"),0.75},
       };
 
             var random = new Random();
             List<MessageLog> logs = data.Select(x => new MessageLog { DateTime = x.Key, Sentiment = x.Value, Message = new string('a', random.Next(5, 50)) }).ToList();
             var query = new DataQuery(logs);
-            _data = query.Query("count(),avg(sentiment)*10,avg(message.length),sum(message.length)/10 | 2:0:0 since 12.7.2019 options Theme=DarkTheme,DateFormat=hh:MM:ss", "Messages", out var options);
+            _data = query.Query("group(1,dd.MM.yyyy),count(),avg(sentiment)*10,avg(message.length),sum(message.length)/10 | 2:00:0 since 12.7.2019 options Theme=DarkTheme,DateFormat=HH:mm:ss", "Messages", out var options);
             _data.MaxValue = ((int)Math.Ceiling(_data.MaxValue / 10.0) * 10);
-            _data.GroupingInterval = TimeSpan.FromDays(1).Ticks;
-            _data.DataGroupNames.AddRange(data.Keys.Select(x => x.ToString("dd.yyyy")).Distinct());
+           /* _data.GroupingInterval = TimeSpan.FromDays(1).Ticks;
+            _data.DataGroupNames.AddRange(data.Keys.Select(x => x.ToString("dd.yyyy")).Distinct());*/
             var dt = data.Keys.Max();
-            _data.MaxBaseValue = new DateTime(dt.Year, dt.Month, dt.Day, 23, 0, 0).Ticks;
+            //_data.MaxBaseValue = new DateTime(dt.Year, dt.Month, dt.Day, 23, 0, 0).Ticks;
 
             InitializeComponent();
             var sdStyle = LineChart.DefaultStyle;

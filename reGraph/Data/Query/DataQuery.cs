@@ -1,4 +1,5 @@
-﻿using System;
+﻿using reGraph.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -33,8 +34,8 @@ namespace AeoGraphing.Data.Query
       { "sum", (x) => x.Sum() },
       { "max", (x) => x.Count() == 0 ? 0 : x.Max() },
       { "min", (x) => x.Count() == 0 ? 0 : x.Min() },
-      { "distinct", (x) => x.Distinct().Count() }
-
+      { "distinct", (x) => x.Distinct().Count() },
+      { "count", (x) => x.Count() }
     };
 
     public DataQuery(IEnumerable<IDateable> dataCollection)
@@ -61,7 +62,7 @@ namespace AeoGraphing.Data.Query
     {
       options = new Dictionary<string, string>();
       var split = query.Split('|');
-      var series = split[0].Split(',').Select(x => x.Trim()).ToArray();
+      var series = split[0].SplitIgnore(',', '(', ')').Select(x => x.Trim()).ToArray();
       var period = split[1].Trim();
       var index = period.IndexOf(' ');
       TimeSpan timespan;
@@ -128,6 +129,10 @@ namespace AeoGraphing.Data.Query
         }
       }
 
+      TimeSpan groupingInterval = TimeSpan.MinValue;
+      List<string> dataGroupNames = null;
+      List<double> dataGroupValues = null;
+
       foreach (var s in series)
       {
         double scale = 1;
@@ -140,6 +145,27 @@ namespace AeoGraphing.Data.Query
 
         if (index > 0)
           path = rest.Substring(0, index);
+
+        if (func == "group")
+        {
+          var grouping = path.Split(',');
+          groupingInterval = TimeSpan.Parse(grouping[0]);
+          var groupNameFormat = grouping[1];
+          dataGroupNames = new List<string>();
+          dataGroupValues = new List<double>();
+
+          var counter = DateTime.Parse(from.ToShortDateString());
+          while (counter <= to)
+          {
+            dataGroupNames.Add(counter.ToString(groupNameFormat));
+            dataGroupValues.Add(counter.Ticks);
+            counter += groupingInterval;
+          }
+
+          continue;
+        }
+
+
 
         index = rest.IndexOfAny(new char[] { '*', '/' });
         if (index >= 0)
@@ -155,21 +181,26 @@ namespace AeoGraphing.Data.Query
         {
           var next = dt + timespan;
           var messages = data.Where(x => x.DateTime >= dt && x.DateTime < next);
-          if (func == "count")
-          {
-            ds.DataPoints.Add(new DataPoint(messages.Count() * scale, dt.Ticks, dt.ToString(dateFormat)));
-          }
+
+          IEnumerable<decimal> values;
+          if (string.IsNullOrEmpty(path))
+            values = messages.Select(x => (decimal)0);
           else
-          {
-            var values = messages.Select(x => getValue(x, path));
-            ds.DataPoints.Add(new DataPoint((double)METHODS[func](values) * scale, dt.Ticks, dt.ToString(dateFormat)));
-          }
+            values = messages.Select(x => getValue(x, path));
+
+          ds.DataPoints.Add(new DataPoint((double)METHODS[func](values) * scale, dt.Ticks, dt.ToString(dateFormat)));
           dt = next;
         }
         dseries.Add(ds);
       }
 
-      return new DataCollection(name, $"[{string.Join(", ", series)}] of {name}", null, null, dseries.ToArray());
+      var res = new DataCollection(name, $"[{string.Join(", ", series)}] of {name}", null, null, dseries.ToArray());
+      if (dataGroupNames != null)
+      {
+        res.DataGroupValues.AddRange(dataGroupValues);
+        res.DataGroupNames.AddRange(dataGroupNames);
+      }
+      return res;
     }
 
     private decimal getValue(object obj, string path)
