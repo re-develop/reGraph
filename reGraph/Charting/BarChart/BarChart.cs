@@ -6,6 +6,7 @@ using System.Text;
 using AeoGraphing.Charting.ColorGenerators;
 using AeoGraphing.Charting.Styling;
 using AeoGraphing.Data;
+using reGraph.Charting.ColorGenerators;
 
 namespace reGraph.Charting.BarChart
 {
@@ -51,13 +52,15 @@ namespace reGraph.Charting.BarChart
       _style = style;
     }
 
-    private int barGroupCount => DataSource.DataSeries.Max(x => x.DataPoints.Count);
-    private float barRenderSpace => paddedWidth - valueLineWidth;
-    private float barGroupSpace => (barRenderSpace - ((barGroupCount - 1) * _style.BarGroupPadding.GetFloatValue(this.Width))) / DataSource.DataSeries.Count;
-    private float barSpace => (barGroupSpace - ((DataSource.DataSeries.Count - 1) * _style.BarInGroupPadding.GetFloatValue(this.Width))) / barGroupCount;
-    private float barWidth => Math.Min(_style.MaxBarWidth.GetFloatValue(this.Width), barSpace);
-    private float barCenterOffset => (barGroupSpace - ((barSpace - _style.MaxBarWidth.GetFloatValue(this.Width)) * DataSource.DataSeries.Count)) / 2;
-
+    private float chartRenderSpace => paddedWidth - valueLinePos;
+    private int groupCount => DataSource.DataSeries.Max(x => x.DataPoints.Count);
+    private float groupSpace => (chartRenderSpace - ((groupCount - 1) * _style.BarGroupPadding.GetFloatValue(chartRenderSpace))) / groupCount;
+    private float barSpace => (groupSpace - ((DataSource.DataSeries.Count - 1) * _style.BarInGroupPadding.GetFloatValue(chartRenderSpace))) / DataSource.DataSeries.Count;
+    private float barWidth => Math.Min(_style.MaxBarWidth.GetFloatValue(chartRenderSpace), barSpace);
+    private float barOffset => (chartRenderSpace - requiredSpace) / 2;
+    // 3% Error dunno why but that fixes it, pls dont touch
+    private float requiredSpace => (chartRenderSpace * 0.03F) + ((groupCount - 1) * groupSpace) + ((groupCount - 1) * _style.BarGroupPadding.GetFloatValue(chartRenderSpace)) + ((DataSource.DataSeries.Count - 1) * barWidth) + ((DataSource.DataSeries.Count - 1) * (_style.BarInGroupPadding.GetFloatValue(chartRenderSpace)));
+    
     protected override void drawBaseLabels(Graphics ctx)
     {
       //base.drawBaseLabels(ctx);
@@ -65,19 +68,19 @@ namespace reGraph.Charting.BarChart
 
     private void drawBars(Graphics graphics, DataSeries series, int barNum, Color color)
     {
-      var index = 0;
+      var groupNum = 0;
       var brush = new SolidBrush(color);
       foreach (var point in series.DataPoints)
       {
-        var x = (index * barGroupSpace) + (index * _style.BarGroupPadding.GetFloatValue(this.Width)) + (barNum * barWidth) + (barNum * _style.BarInGroupPadding.GetFloatValue(this.Width)) + valueLinePos;
-        if (barCenterOffset > 0)
-          x += barCenterOffset;
+        var x = (groupNum * groupSpace) + (groupNum * _style.BarGroupPadding.GetFloatValue(chartRenderSpace)) + (barNum * barWidth) + (barNum * (_style.BarInGroupPadding.GetFloatValue(chartRenderSpace))) + valueLinePos;
+        if (barSpace > barWidth)
+          x += barOffset;
 
         var height = (float)(pixelPerValue * (point.Value - DataSource.MinValue));
         var rect = new RectangleF(x, baseLinePos - height, barWidth, height);
         graphics.FillRectangle(brush, rect);
         drawBaseLabel(graphics, x + (barWidth / 2), point.BaseLabel);
-        index++;
+        groupNum++;
       }
     }
 

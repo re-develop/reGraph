@@ -17,6 +17,7 @@ using AeoGraphing.Charting.LineChart;
 using AeoGraphing.Charting.Styling;
 using AeoGraphing.Charting.ColorGenerators;
 using reGraph.Charting.BarChart;
+using reGraph.Charting.ColorGenerators;
 
 namespace AeoGraphingTest
 {
@@ -312,13 +313,50 @@ namespace AeoGraphingTest
             GroupLineStyle = new LineStyle { Color = Color.GhostWhite, Type = LineType.DashDotted, Width = 1 }
         };
 
-        BarChartStyle barStyle = BarChart.DefaultStyle;
+
+        public static BarChartStyle BarDarkStyle => new BarChartStyle()
+        {
+          Padding = 10,
+          TextColor = Color.WhiteSmoke,
+          BackgroundColor = Color.FromArgb(54, 57, 62),
+          TitleFont = new Font("Arial", 28),
+          DescriptionFont = new Font("Arial", 18),
+          AxisCaptionFont = new Font("Arial", 16),
+          DataCaptionFont = new Font("Arial", 14),
+          AxisLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
+          AxisTicksLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
+          AxisTicksLength = 5,
+          AxisXPosition = new Measure(0.15F, MeasureType.Percentage),
+          DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
+          DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.WhiteSmoke } },
+          AxisYPosition = new Measure(0.05F, MeasureType.Percentage),
+          DataCaptionPadding = 5,
+          DrawAxis = Axis2D.AxisX | Axis2D.AxisY,
+          DrawAxisCaption = Axis2D.AxisX | Axis2D.AxisY,
+          DrawAxisHelpLine = Axis2D.AxisX,
+          DrawAxisTicks = Axis2D.AxisX | Axis2D.AxisY,
+          NumericFormat = "0.00",
+          ThinLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Dashed, Width = 1 },
+          DrawTitle = true,
+          DrawDescription = true,
+          DrawDataLabels = true,
+          DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
+          DataLabelSquarePadding = 5,
+          DataColors = /*new PastelGenerator(Color.LightGray)*/new HarmonicContrastGenerator( 0.5, 0.8, 80),
+          MaxBarWidth = new Measure(0.04F, MeasureType.Percentage),
+          BarGroupPadding = new Measure(0.05F, MeasureType.Percentage),
+          BarInGroupPadding = new Measure(0.005F, MeasureType.Percentage)
+        };
+
+        BarChartStyle barStyle = BarDarkStyle;
         DataCollection barData = new DataCollection("Bargraph Test", "Testing the Bargraph", 100, null,
         new DataSeries("2017", new DataPoint[] { new DataPoint(40, null, null, "Q1"), new DataPoint(60, null, null, "Q2"), new DataPoint(50, null, null, "Q3"), new DataPoint(70, null, null, "Q4") }),
         new DataSeries("2018", new DataPoint[] { new DataPoint(10, null, null, "Q1"), new DataPoint(90, null, null, "Q2"), new DataPoint(70, null, null, "Q3"), new DataPoint(80, null, null, "Q4") }),
         new DataSeries("2019", new DataPoint[] { new DataPoint(10, null, null, "Q1"), new DataPoint(90, null, null, "Q2"), new DataPoint(70, null, null, "Q3"), new DataPoint(80, null, null, "Q4") }),
         new DataSeries("2020", new DataPoint[] { new DataPoint(05, null, null, "Q1"), new DataPoint(25, null, null, "Q2"), new DataPoint(40, null, null, "Q3"), new DataPoint(15, null, null, "Q4") }),
-        new DataSeries("2021", new DataPoint[] { new DataPoint(25, null, null, "Q1"), new DataPoint(55, null, null, "Q2"), new DataPoint(70, null, null, "Q3"), new DataPoint(60, null, null, "Q4") }))
+        new DataSeries("2021", new DataPoint[] { new DataPoint(100, null, null, "Q1"), new DataPoint(5, null, null, "Q2"), new DataPoint(85, null, null, "Q3"), new DataPoint(35, null, null, "Q4") }))
+       // new DataSeries("2022", new DataPoint[] { new DataPoint(30, null, null, "Q1"), new DataPoint(70, null, null, "Q2"), new DataPoint(95, null, null, "Q3"), new DataPoint(40, null, null, "Q4") }),
+       // new DataSeries("2023", new DataPoint[] { new DataPoint(45, null, null, "Q1"), new DataPoint(90, null, null, "Q2"), new DataPoint(45, null, null, "Q3"), new DataPoint(65, null, null, "Q4") }))
         { MinMinValue = 0 } ;
  
         void draw()

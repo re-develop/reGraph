@@ -5,6 +5,45 @@ using System.Text;
 
 namespace AeoGraphing.Charting
 {
+
+  public struct HSV
+  {
+    private double _h;
+    private double _s;
+    private double _v;
+
+    public HSV(double h, double s, double v)
+    {
+      this._h = h;
+      this._s = s;
+      this._v = v;
+    }
+
+    public double H
+    {
+      get { return this._h; }
+      set { this._h = value; }
+    }
+
+    public double S
+    {
+      get { return this._s; }
+      set { this._s = value; }
+    }
+
+    public double V
+    {
+      get { return this._v; }
+      set { this._v = value; }
+    }
+
+    public bool Equals(HSV hsv)
+    {
+      return (this.H == hsv.H) && (this.S == hsv.S) && (this.V == hsv.V);
+    }
+  }
+
+
   public static class Extensions
   {
     public static void Background(this Graphics g, Size size, Color color)
@@ -45,6 +84,61 @@ namespace AeoGraphing.Charting
     public static double Distance(this Color color, Color to)
     {
       return Math.Abs(Math.Sqrt(color.R.SquareSub(to.R) + color.G.SquareSub(to.G) + color.B.SquareSub(to.B)));
+    }
+    
+    public static Color ToRgb(this HSV hsv)
+    {
+      var h = hsv.H % 360;
+      var c = hsv.V * hsv.S;
+      var x = c * (1 - Math.Abs(((h / 60) % 2) - 1));
+      var m = hsv.V - c;
+
+      double r, g, b;
+
+      switch((int)(h / 60))
+      {
+        case 0:
+          r = c;
+          g = x;
+          b = 0;
+          break;
+        case 1:
+          r = x;
+          g = c;
+          b = 0;
+          break;
+        case 2:
+          r = 0;
+          g = c;
+          b = x;
+          break;
+        case 3:
+          r = 0;
+          g = x;
+          b = c;
+          break;
+        case 4:
+          r = x;
+          g = 0;
+          b = c;
+          break;
+        case 5:
+          r = c;
+          g = 0;
+          b = x;
+          break;
+        default:
+          r = 0;
+          g = 0;
+          b = 0;
+          break;
+      }
+
+      r += m;
+      g += m;
+      b += m;
+
+      return Color.FromArgb((byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
     }
   }
 }
