@@ -16,6 +16,7 @@ using Newtonsoft.Json.Converters;
 using AeoGraphing.Charting.LineChart;
 using AeoGraphing.Charting.Styling;
 using AeoGraphing.Charting.ColorGenerators;
+using reGraph.Charting.BarChart;
 
 namespace AeoGraphingTest
 {
@@ -311,10 +312,20 @@ namespace AeoGraphingTest
             GroupLineStyle = new LineStyle { Color = Color.GhostWhite, Type = LineType.DashDotted, Width = 1 }
         };
 
+        BarChartStyle barStyle = BarChart.DefaultStyle;
+        DataCollection barData = new DataCollection("Bargraph Test", "Testing the Bargraph", 100, null,
+        new DataSeries("2017", new DataPoint[] { new DataPoint(40, null, null, "Q1"), new DataPoint(60, null, null, "Q2"), new DataPoint(50, null, null, "Q3"), new DataPoint(70, null, null, "Q4") }),
+        new DataSeries("2018", new DataPoint[] { new DataPoint(10, null, null, "Q1"), new DataPoint(90, null, null, "Q2"), new DataPoint(70, null, null, "Q3"), new DataPoint(80, null, null, "Q4") }),
+        new DataSeries("2019", new DataPoint[] { new DataPoint(10, null, null, "Q1"), new DataPoint(90, null, null, "Q2"), new DataPoint(70, null, null, "Q3"), new DataPoint(80, null, null, "Q4") }),
+        new DataSeries("2020", new DataPoint[] { new DataPoint(05, null, null, "Q1"), new DataPoint(25, null, null, "Q2"), new DataPoint(40, null, null, "Q3"), new DataPoint(15, null, null, "Q4") }),
+        new DataSeries("2021", new DataPoint[] { new DataPoint(25, null, null, "Q1"), new DataPoint(55, null, null, "Q2"), new DataPoint(70, null, null, "Q3"), new DataPoint(60, null, null, "Q4") }))
+        { MinMinValue = 0 } ;
+ 
         void draw()
         {
-            var chart = new LineChart(_data, _sdStyle /*_dfStyle*/, pb1.Width, pb1.Height);
+            //var chart = new LineChart(_data, _sdStyle /*_dfStyle*/, pb1.Width, pb1.Height);
             //chart.ValueSteps = null;
+            var chart = new BarChart(barData, barStyle, pb1.Width, pb1.Height);
             pb1.Image = chart.Render();
         }
 
