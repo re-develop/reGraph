@@ -20,6 +20,7 @@ using reGraph.Charting.BarChart;
 using reGraph.Charting.ColorGenerators;
 using reGraph.Charting;
 using reGraph.Charting.ScatterChart;
+using reGraph.Charting.StackedBarChart;
 
 namespace AeoGraphingTest
 {
@@ -56,6 +57,14 @@ namespace AeoGraphingTest
                     scatter.DataSource.MinMinBaseValue = 0;
                     scatter.DataSource.MinMaxBaseValue = 500;
                     scatter.BaseValueSteps = (scatter.DataSource.ScaledBaseValue * 0.05);
+                }
+
+                if(chart is StackedBarChart stacked)
+                {
+                    var data = stacked.DataSource;
+                    data.MinMaxValue = Enumerable.Range(0, data.DataSeries.Max(x => x.DataPoints.Count)).Select(x => data.DataSeries.Select(y => x < y.DataPoints.Count ? y.DataPoints[x].Value : 0D).Sum()).Max();
+                    data.MaxValue = ((int)Math.Ceiling(data.MaxValue / 10.0) * 10);
+                    stacked.ValueSteps = (stacked.DataSource.ScaledMaxValue * 0.1);
                 }
 
                 var styles = new List<ChartStyle>();
@@ -114,6 +123,7 @@ namespace AeoGraphingTest
         }
 
 
+
         private T getChart<T>(int minPoints = 10, int maxPoints = 20, bool randomizeX = false) where T : IChart
         {
             var t = typeof(T);
@@ -128,6 +138,7 @@ namespace AeoGraphingTest
         {
             _charts.Add(getChart<LineChart>());
             _charts.Add(getChart<BarChart>(1, 5));
+            _charts.Add(getChart<StackedBarChart>(1, 7));
             _charts.Add(getChart<ScatterChart>(randomizeX: true));
         }
 
@@ -204,6 +215,12 @@ namespace AeoGraphingTest
                     scatter.BaseValueSteps = (newData.ScaledBaseValue * 0.025);
                     break;
 
+                case StackedBarChart stacked:
+                    newData = generateData(1, 7);
+                    newData.MinMaxValue = Enumerable.Range(0, newData.DataSeries.Max(x => x.DataPoints.Count)).Select(x => newData.DataSeries.Select(y => x < y.DataPoints.Count ? y.DataPoints[x].Value : 0D).Sum()).Max();
+                    newData.MaxValue = ((int)Math.Ceiling(newData.MaxValue / 10.0) * 10);
+                    stacked.ValueSteps = (newData.ScaledMaxValue * 0.1);
+                    break;
                 default:
                     newData = generateData();
                     break;
@@ -379,6 +396,40 @@ namespace AeoGraphingTest
             DataColors = /*new PastelGenerator(Color.LightGray)*/new HarmonicContrastGenerator(0.5, 0.8, 80),
             ScatterDotStyle = new BorderedShapeStyle { Color = Color.LightGray, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
         };
+        public static StackedBarChartStyle StackedBarDarkStyle => new StackedBarChartStyle()
+        {
+            Padding = 10,
+            TextColor = Color.WhiteSmoke,
+            BackgroundColor = Color.FromArgb(54, 57, 62),
+            TitleFont = new Font("Arial", 28),
+            DescriptionFont = new Font("Arial", 18),
+            AxisCaptionFont = new Font("Arial", 16),
+            DataCaptionFont = new Font("Arial", 14),
+            AxisLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
+            AxisTicksLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
+            AxisTicksLength = 5,
+            AxisXPosition = new Measure(0.17F, MeasureType.Percentage),
+            DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
+            DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.WhiteSmoke } },
+            AxisYPosition = new Measure(0.07F, MeasureType.Percentage),
+            DataCaptionPadding = 5,
+            DrawAxis = Axis2D.AxisX | Axis2D.AxisY,
+            DrawAxisCaption = Axis2D.AxisX | Axis2D.AxisY,
+            DrawAxisHelpLine = Axis2D.AxisX,
+            DrawAxisTicks = Axis2D.AxisX | Axis2D.AxisY,
+            NumericFormat = "0.00",
+            ThinLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Dashed, Width = 1 },
+            DrawTitle = true,
+            DrawDescription = true,
+            DrawDataLabels = true,
+            DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
+            DataLabelSquarePadding = 5,
+            DataColors = /*new PastelGenerator(Color.LightGray)*/new HarmonicContrastGenerator(0.5, 0.8, 80),
+            MaxBarWidth = new Measure(0.05F, MeasureType.Percentage),
+            BarPadding = new Measure(0.07F, MeasureType.Percentage),
+            DrawValueLabelInBar = true
+        };
+
     }
 
     public class FontConverter : JsonConverter<Font>
