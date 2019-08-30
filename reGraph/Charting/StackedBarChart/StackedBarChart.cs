@@ -116,6 +116,7 @@ namespace reGraph.Charting.StackedBarChart
         protected override void render(Graphics graphics)
         {
             renderBars(graphics);
+            drawLines(graphics);
         }
     }
 }

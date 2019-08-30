@@ -33,6 +33,7 @@
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.btnNewData = new System.Windows.Forms.Button();
             this.styleBox = new System.Windows.Forms.ComboBox();
+            this.btnEditStyle = new System.Windows.Forms.Button();
             this.tabControl.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -64,7 +65,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(1110, 637);
+            this.tabPage2.Size = new System.Drawing.Size(1110, 615);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -89,11 +90,22 @@
             this.styleBox.Size = new System.Drawing.Size(205, 21);
             this.styleBox.TabIndex = 3;
             // 
+            // btnEditStyle
+            // 
+            this.btnEditStyle.Location = new System.Drawing.Point(1051, 652);
+            this.btnEditStyle.Name = "btnEditStyle";
+            this.btnEditStyle.Size = new System.Drawing.Size(75, 23);
+            this.btnEditStyle.TabIndex = 4;
+            this.btnEditStyle.Text = "Edit Style";
+            this.btnEditStyle.UseVisualStyleBackColor = true;
+            this.btnEditStyle.Click += new System.EventHandler(this.BtnEditStyle_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1143, 687);
+            this.Controls.Add(this.btnEditStyle);
             this.Controls.Add(this.styleBox);
             this.Controls.Add(this.btnNewData);
             this.Controls.Add(this.tabControl);
@@ -111,6 +123,7 @@
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.Button btnNewData;
         private System.Windows.Forms.ComboBox styleBox;
+        private System.Windows.Forms.Button btnEditStyle;
     }
 }
 

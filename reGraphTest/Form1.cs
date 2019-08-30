@@ -430,6 +430,18 @@ namespace AeoGraphingTest
             DrawValueLabelInBar = true
         };
 
+        private void BtnEditStyle_Click(object sender, EventArgs e)
+        {
+            var form = new EditStyleForm((ChartStyle)styleBox.SelectedItem);
+            if(form.ShowDialog() == DialogResult.OK)
+            {
+                var page = tabControl.SelectedTab;
+                var pb = _pages.First(x => x.Value == page).Key;
+                var chart = _pictures[pb];
+                chart.SetStyle(form.Style);
+                pb.Image = chart.Render();
+            }
+        }
     }
 
     public class FontConverter : JsonConverter<Font>
