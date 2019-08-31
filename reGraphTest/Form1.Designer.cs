@@ -92,6 +92,7 @@
             // 
             // btnEditStyle
             // 
+            this.btnEditStyle.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnEditStyle.Location = new System.Drawing.Point(1051, 652);
             this.btnEditStyle.Name = "btnEditStyle";
             this.btnEditStyle.Size = new System.Drawing.Size(75, 23);
