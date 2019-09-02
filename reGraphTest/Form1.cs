@@ -56,7 +56,7 @@ namespace AeoGraphingTest
                 {
                     scatter.DataSource.MinMinBaseValue = 0;
                     scatter.DataSource.MinMaxBaseValue = 500;
-                    scatter.BaseValueSteps = (scatter.DataSource.ScaledBaseValue * 0.05);
+                    scatter.BaseValueSteps = (scatter.DataSource.ScaledBaseValue * 0.025);
                 }
 
                 if(chart is StackedBarChart stacked)
