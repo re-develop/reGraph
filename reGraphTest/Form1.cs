@@ -21,6 +21,7 @@ using reGraph.Charting.ColorGenerators;
 using reGraph.Charting;
 using reGraph.Charting.ScatterChart;
 using reGraph.Charting.StackedBarChart;
+using reGraph.Charting.SpiderChart;
 
 namespace AeoGraphingTest
 {
@@ -140,6 +141,7 @@ namespace AeoGraphingTest
             _charts.Add(getChart<BarChart>(1, 5));
             _charts.Add(getChart<StackedBarChart>(1, 7));
             _charts.Add(getChart<ScatterChart>(randomizeX: true));
+            _charts.Add(getChart<SpiderChart>());
         }
 
 
