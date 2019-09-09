@@ -16,7 +16,7 @@ namespace AeoGraphing.Charting.Styling
         public Measure DataCaptionPadding { get; set; }
         public Color TextColor { get; set; }
         public Color BackgroundColor { get; set; }
-
+        public IEnumerator<Color> DataColors { get; set; }
         public bool DrawTitle { get; set; }
         public bool DrawDescription { get; set; }
 

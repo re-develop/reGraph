@@ -11,5 +11,7 @@ namespace reGraph.Charting.SpiderChart
         public Measure HeightPadding { get; set; }
         public LineStyle ThinLineStyle { get; set; }
         public LineStyle AxisLineStyle { get; set; }
+        public LineStyle DataConnectionLineStyle { get; set; }
+        public BorderedShapeStyle DataDotStyle { get; set; }
     }
 }

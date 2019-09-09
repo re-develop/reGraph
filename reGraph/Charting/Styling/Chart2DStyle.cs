@@ -24,7 +24,6 @@ namespace AeoGraphing.Charting.Styling
     public Measure DataLabelSquarePadding { get; set; }
     public BorderedShapeStyle DataLabelSquare { get; set; }
     public bool DrawDataLabels { get; set; }
-    public IEnumerator<Color> DataColors { get; set; } 
   }
 
   [Flags]
