@@ -85,7 +85,7 @@ namespace AeoGraphing.Charting
     {
       return Math.Abs(Math.Sqrt(color.R.SquareSub(to.R) + color.G.SquareSub(to.G) + color.B.SquareSub(to.B)));
     }
-    
+
     public static Color ToRgb(this HSV hsv)
     {
       var h = hsv.H % 360;
