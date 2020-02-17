@@ -57,7 +57,6 @@ namespace reGraph.Charting.SpiderChart
     private SpiderChartStyle _style;
     public override ChartStyle Style => _style;
 
-
     protected int pointCount => DataSource.DataSeries.Max(x => x.DataPoints.Count);
     protected override float chartTop => base.chartTop + (_style.DrawDataLabels ? _style.DataLabelPadding.GetFloatValue(Height) : 0);
     protected float chartHeight => Height - (2 * _style.HeightPadding.GetFloatValue(this.Height)) - chartTop - (_style.DrawDataLabels ? _style.DataLabelPadding.GetFloatValue(Height) : 0);
@@ -66,6 +65,8 @@ namespace reGraph.Charting.SpiderChart
     protected float lineLength => chartMinSide / 2;
     protected PointF chartMiddle => new PointF(Width / 2, (chartHeight / 2) + chartTop);
     protected float ValueSteps { get; set; }
+
+
 
     private PointF getPointOnLine(int lineIndex, float radiusPercent)
     {
@@ -162,6 +163,7 @@ namespace reGraph.Charting.SpiderChart
     }
 
 
+
     private void renderAxisLabel(Graphics graphics, int index, string label)
     {
       var measure = graphics.MeasureString(label, _style.AxisCaptionFont);
@@ -221,6 +223,7 @@ namespace reGraph.Charting.SpiderChart
     }
 
 
+
     private string getLabel(int index)
     {
       if (index < DataSource.DataSeries[0].DataPoints.Count)
@@ -228,6 +231,7 @@ namespace reGraph.Charting.SpiderChart
 
       return string.Empty;
     }
+
 
 
     private void renderAxis(Graphics graphics)
