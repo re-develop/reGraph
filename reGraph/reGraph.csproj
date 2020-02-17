@@ -2,10 +2,31 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Aeolin Ferjünnoz</Authors>
+    <Description>a .net core graphics library which provides easy chart rendering to streams for backend only services like discord bots.</Description>
+    <Copyright>Aeolin Ferjünnoz</Copyright>
+    <PackageLicenseExpression />
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageTags>Chart Graphs Linechart Piechart Barchart .netcore core</PackageTags>
+    <PackageId>Aeolin.reGraph</PackageId>
+    <RepositoryUrl>https://github.com/re-develop/reGraph</RepositoryUrl>
+    <RepositoryType>git hub</RepositoryType>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <NeutralLanguage>en</NeutralLanguage>
+    <AssemblyVersion>1.0.2.0</AssemblyVersion>
+    <FileVersion>1.0.2.0</FileVersion>
+    <Version>1.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="4.6.0-preview6.19303.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

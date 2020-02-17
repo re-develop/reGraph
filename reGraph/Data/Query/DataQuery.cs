@@ -1,6 +1,8 @@
-﻿using reGraph.Data;
+﻿using AeoGraphing.Charting;
+using reGraph.Data;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -58,8 +60,9 @@ namespace AeoGraphing.Data.Query
       return -1;
     }
 
-    public DataCollection Query(string query, string name, out Dictionary<string, string> options)
+    public DataCollection Query(string query, string name, out Dictionary<string, string> options, IFormatProvider formatProvider = null)
     {
+      formatProvider = formatProvider ?? CultureInfo.GetCultureInfo("de-CH");
       options = new Dictionary<string, string>();
       var split = query.Split('|');
       var series = split[0].SplitIgnore(',', '(', ')').Select(x => x.Trim()).ToArray();
@@ -96,40 +99,22 @@ namespace AeoGraphing.Data.Query
 
       if (SINCE_INDICATORS.Contains(indicator))
       {
-        from = DateTime.Parse(period);
+        from = DateTime.Parse(period, formatProvider);
         to = DateTime.UtcNow;
       }
       else if (FROM_INDICATORS.Contains(indicator))
       {
         index = indexOf(period, TO_INDICATORS, out var len);
-        from = DateTime.Parse(period.Substring(0, index).Trim());
-        to = DateTime.Parse(period.Substring(index + len).Trim());
+        from = DateTime.Parse(period.Substring(0, index).Trim(), formatProvider);
+        to = DateTime.Parse(period.Substring(index + len).Trim(), formatProvider);
       }
 
       var dseries = new List<DataSeries>();
       var data = _data.Where(x => x.DateTime >= from && x.DateTime <= to).ToList();
-      from = data.Min(x => x.DateTime);
-      to = data.Max(x => x.DateTime);
+      from = data.Min(x => x.DateTime).RoundUp(timespan);
+      to = data.Max(x => x.DateTime).RoundUp(timespan);
 
-      if (timespan.Seconds == 0)
-      {
-        from = from.AddSeconds(-from.Second);
-        to = to.AddSeconds(-to.Second);
-
-        if (timespan.Minutes == 0)
-        {
-          from = from.AddMinutes(-from.Minute);
-          to = to.AddMinutes(-to.Minute);
-        }
-
-        if (timespan.Hours == 0)
-        {
-          from = from.AddHours(-from.Hour);
-          to = to.AddHours(-to.Hour);
-        }
-      }
-
-      TimeSpan groupingInterval = TimeSpan.MinValue;
+      var groupingInterval = TimeSpan.MinValue;
       List<string> dataGroupNames = null;
       List<double> dataGroupValues = null;
 
@@ -182,15 +167,28 @@ namespace AeoGraphing.Data.Query
           var next = dt + timespan;
           var messages = data.Where(x => x.DateTime >= dt && x.DateTime < next);
 
-          IEnumerable<decimal> values;
-          if (string.IsNullOrEmpty(path))
-            values = messages.Select(x => (decimal)0);
+          if (func == "count")
+          {
+            ds.DataPoints.Add(new DataPoint(messages.Count() * scale, dt.Ticks, dt.ToString(dateFormat)));
+          }
           else
-            values = messages.Select(x => getValue(x, path));
+          {
+            IEnumerable<decimal> values;
+            if (string.IsNullOrEmpty(path))
+            {
+              values = messages.Select(x => (decimal)0);
+            }
+            else
+            {
+              values = messages.Select(x => getValue(x, path));
+            }
 
-          ds.DataPoints.Add(new DataPoint((double)METHODS[func](values) * scale, dt.Ticks, dt.ToString(dateFormat)));
+            ds.DataPoints.Add(new DataPoint((double)METHODS[func](values) * scale, dt.Ticks, dt.ToString(dateFormat)));
+          }
+
           dt = next;
         }
+
         dseries.Add(ds);
       }
 
