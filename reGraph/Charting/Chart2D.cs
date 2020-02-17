@@ -13,50 +13,32 @@ using System.Text;
 
 namespace reGraph.Charting
 {
-    public abstract class Chart2D : ISizeable, IChart
+    public abstract class Chart2D : Chart
     {
-        public ChartStyle Style => style;
+        public override ChartStyle Style => style;
         private Chart2DStyle style { get; set; }
-        public DataCollection DataSource { get; private set; }
-        private Graphics graphics { get; set; }
-
-        public int Width { get; private set; }
-        public int Height { get; private set; }
-
+ 
         public virtual double? ValueSteps { get; set; }
         public virtual double? BaseValueSteps { get; set; }
         public virtual bool HasValueSteps => ValueSteps != null;
         public virtual bool HasBaseValueStep => BaseValueSteps != null;
+
         protected virtual int baseLineHeight { get => (int)(style.AxisXPosition.GetFloatValue(this.Height) + (style.AxisTicksLength?.GetFloatValue(this.Height) ?? 0) + style.Padding.GetFloatValue(this.Height) + (style.DrawDataLabels ? style.DataLabelsPosition.GetFloatValue(this.Height) : 0)); }
         protected virtual int valueLineWidth { get => (int)(style.AxisYPosition.GetFloatValue(this.Width) + (style.AxisTicksLength?.GetFloatValue(this.Width) ?? 0) + style.Padding.GetFloatValue(this.Width)); }
-        protected virtual int paddedWidth => Width - style.Padding.GetIntValue(this.Width);
-        protected virtual int paddedHeight => Height + style.Padding.GetIntValue(this.Height);
-        protected virtual float titleHeight => (style.DrawTitle && string.IsNullOrEmpty(DataSource.Title) == false) ? graphics.MeasureString(DataSource.Title, style.TitleFont).Height + style.Padding.GetFloatValue(this.Height) : 0;
-        protected virtual float descriptionHeight => (style.DrawDescription && string.IsNullOrEmpty(DataSource.Description) == false) ? graphics.MeasureString(DataSource.Description, style.DescriptionFont).Height + style.Padding.GetFloatValue(this.Height) : 0;
-        protected virtual float chartTop => style.Padding.GetFloatValue(this.Height) + titleHeight + descriptionHeight;
         protected virtual double pixelPerBaseValue => (paddedWidth - valueLineWidth) / DataSource.ScaledBaseValue;
         protected virtual double pixelPerValue => (baseLinePos - chartTop) / DataSource.ScaledMaxValue;
         protected virtual float baseLinePos => paddedHeight - baseLineHeight;
         protected virtual float valueLinePos => valueLineWidth;
 
-        public Chart2D(DataCollection data, Chart2DStyle style, int width, int height)
+        public Chart2D(DataCollection data, Chart2DStyle style, int width, int height) : base(data, style, width, height)
         {
-            this.DataSource = data;
-            this.Width = width;
-            this.Height = height;
             this.style = style;
             ValueSteps = (DataSource.ScaledMaxValue * 0.1);
         }
 
-        public virtual void Render(Stream stream, ImageFormat format = null)
-        {
-            using (var img = Render())
-            {
-                img.Save(stream, format ?? ImageFormat.Png);
-            }
-        }
 
-        public Image Render()
+
+        public override Image Render()
         {
             if (Width <= 0 || Height <= 0)
                 return null;
@@ -80,22 +62,6 @@ namespace reGraph.Charting
 
             return img;
         }
-
-        protected abstract void render(Graphics graphics);
-        protected virtual void drawDataSeries(Graphics graphics)
-        {
-            PointF? last = new PointF(style.Padding.GetFloatValue(this.Width), paddedHeight - style.DataLabelsPosition.GetFloatValue(this.Height));
-            style.DataColors.Reset();
-            foreach (var series in DataSource.DataSeries)
-            {
-                var color = style.DataColors.Current;
-                if (style.DrawDataLabels && last != null)
-                    last = drawDataLabel(graphics, last.Value.X, last.Value.Y, series.Name, color)?.TopRight();
-
-                style.DataColors.MoveNext();
-            }
-        }
-
 
 
         protected virtual void drawValueLabels(Graphics ctx)
@@ -128,7 +94,6 @@ namespace reGraph.Charting
 
 
 
-
         protected virtual void drawValueLabel(Graphics ctx, float y, string labelContent, bool firstValue = false)
         {
             if (style.DrawAxisTicks.HasFlag(Axis2D.AxisY))
@@ -144,38 +109,6 @@ namespace reGraph.Charting
             StringFormat stringFormat = new StringFormat() { Alignment = StringAlignment.Far, LineAlignment = StringAlignment.Center };
             var origin = new PointF(valueLinePos - (style.DrawAxisTicks.HasFlag(Axis2D.AxisY) ? style.AxisTicksLength.GetFloatValue(this.Width) : 0) - style.DataCaptionPadding.GetFloatValue(this.Width), y);
             ctx.DrawString(labelContent, style.DataCaptionFont, new SolidBrush(style.TextColor), origin, stringFormat);
-        }
-
-
-
-        protected virtual RectangleF? drawDataLabel(Graphics graphics, float x, float y, string name, Color color)
-        {
-            var size = graphics.MeasureString(name, style.DataCaptionFont);
-            var squareWidth = Math.Max(style.DataLabelSquare.Width.GetFloatValue(this.Width), style.DataLabelSquare.Border?.Width?.GetFloatValue(this.Width) ?? 0);
-            var heigth = Math.Max(size.Height, squareWidth);
-            var width = size.Width + style.DataLabelSquarePadding.GetFloatValue(this.Width) + squareWidth + style.DataLabelPadding.GetFloatValue(this.Width);
-            if (x + width > paddedWidth)
-            {
-                x = style.Padding.GetFloatValue(this.Width);
-                y += heigth + style.DataLabelPadding.GetFloatValue(this.Height);
-            }
-
-            if (y > Height - style.Padding.GetFloatValue(this.Height))
-                return null;
-
-            var midPointY = y + (heigth / 2);
-            if (style.DataLabelSquare.Border != null)
-            {
-                var sqbHeight = style.DataLabelSquare.Border.Width.GetFloatValue(this.Width);
-                graphics.FillRectangle(new SolidBrush(style.DataLabelSquare.Border.Color.ReplaceIfTransparent(color)), new RectangleF(x + ((squareWidth - sqbHeight) / 2), midPointY - (sqbHeight / 2), sqbHeight, sqbHeight));
-            }
-
-            var sqHeight = style.DataLabelSquare.Width.GetFloatValue(this.Width);
-            graphics.FillRectangle(new SolidBrush(color), new RectangleF(x + ((squareWidth - sqHeight) / 2), midPointY - (sqHeight / 2), sqHeight, sqHeight));
-            StringFormat stringFormat = new StringFormat() { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center };
-            graphics.DrawString(name, style.DataCaptionFont, new SolidBrush(style.DataLabelSquare.Color.ReplaceIfTransparent(color)), new PointF(x + squareWidth + style.DataLabelSquarePadding.GetFloatValue(this.Width), midPointY), stringFormat);
-
-            return new RectangleF(x, y, width, heigth);
         }
 
 
@@ -227,7 +160,7 @@ namespace reGraph.Charting
         {
             if (HasBaseValueStep)
             {
-                for(double i = DataSource.MinBaseValue; i <= DataSource.MaxBaseValue; i+= BaseValueSteps.Value)
+                for (double i = DataSource.MinBaseValue; i <= DataSource.MaxBaseValue; i += BaseValueSteps.Value)
                 {
                     var x = (float)(pixelPerBaseValue * (i - DataSource.MinBaseValue)) + valueLineWidth;
                     drawBaseLabel(ctx, x, i.ToString(style.NumericFormat));
@@ -262,21 +195,11 @@ namespace reGraph.Charting
 
 
 
-        public void SetSize(int width, int heigth)
+        public override void SetStyle(ChartStyle style)
         {
-            this.Width = width;
-            this.Height = heigth;
-        }
-
-        public void SetDataSource(DataCollection source)
-        {
-            this.DataSource = source;
-        }
-
-        public virtual void SetStyle(ChartStyle style)
-        {
-            if(style is Chart2DStyle style2d)
+            if (style is Chart2DStyle style2d)
             {
+                base.SetStyle(style);
                 this.style = style2d;
             }
         }

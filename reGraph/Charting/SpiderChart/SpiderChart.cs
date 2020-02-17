@@ -14,8 +14,9 @@ using AeoGraphing.Data;
 
 namespace reGraph.Charting.SpiderChart
 {
-    public class SpiderChart : IChart
+    public class SpiderChart : Chart
     {
+        const double HALF_PI = Math.PI / 2;
         public static SpiderChartStyle DefaultStyle => new SpiderChartStyle
         {
             Padding = 10,
@@ -37,68 +38,36 @@ namespace reGraph.Charting.SpiderChart
             DataColors = new PastelGenerator(Color.LightGray),
             DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
             DataDotStyle = new BorderedShapeStyle { Color = Color.DarkGray, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
+            DrawDataLabels = true,
+            DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
+            DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.DarkGray } },
+            DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
+            DataLabelSquarePadding = 5,
         };
 
-        public SpiderChart(DataCollection data, SpiderChartStyle style, int width, int height)
+        public SpiderChart(DataCollection data, SpiderChartStyle style, int width, int height) : base(data, style, width, height)
         {
-            this.DataSource = data;
             this._style = style;
-            this.Width = width;
-            this.Height = height;
             this.ValueSteps = 0.1F;
         }
 
         private SpiderChartStyle _style;
-        public ChartStyle Style => _style;
-        protected int Width { get; set; }
-        protected int Height { get; set; }
-        protected Graphics graphics;
+        public override ChartStyle Style => _style;
 
-        public DataCollection DataSource { get; private set; }
 
         protected int pointCount => DataSource.DataSeries.Max(x => x.DataPoints.Count);
-        protected float chartHeight => Height - (2 * _style.HeightPadding.GetFloatValue(this.Height));
+        protected float chartHeight => Height - (2 * _style.HeightPadding.GetFloatValue(this.Height)) - chartTop - (_style.DrawDataLabels ? _style.DataLabelsPosition.GetFloatValue(this.Height) : 0);
         protected float chartWidth => Width - (2 * _style.WidthPadding.GetFloatValue(this.Width));
         protected float chartMinSide => Math.Min(chartWidth, chartHeight);
         protected float lineLength => chartMinSide / 2;
-        protected PointF chartMiddle => new PointF(Width / 2, Height / 2);
-        public float ValueSteps { get; set; }
-
-        public virtual void Render(Stream stream, ImageFormat format = null)
-        {
-            using (var img = Render())
-            {
-                img.Save(stream, format ?? ImageFormat.Png);
-            }
-        }
-
-        public Image Render()
-        {
-            if (Width <= 0 || Height <= 0)
-                return null;
-
-            var img = new Bitmap(Width, Height);
-            using (graphics = Graphics.FromImage(img))
-            {
-                graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                graphics.CompositingQuality = CompositingQuality.HighQuality;
-                graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
-                graphics.Background(img.Size, _style.BackgroundColor);
-                renderAxis(graphics);
-                renderHelplines(graphics);
-                renderSeries(graphics);
-            }
-
-            return img;
-        }
-
+        protected PointF chartMiddle => new PointF(Width / 2, (chartHeight / 2) + chartTop);
+        protected float ValueSteps { get; set; }
 
         private PointF getPointOnLine(int lineIndex, float radiusPercent)
         {
             var steps = (2 * Math.PI) / pointCount;
             var angle = steps * lineIndex;
+            angle -= HALF_PI;
             var radius = lineLength * radiusPercent;
             var x = chartMiddle.X + (Math.Cos(angle) * radius);
             var y = chartMiddle.Y + (Math.Sin(angle) * radius);
@@ -157,7 +126,7 @@ namespace reGraph.Charting.SpiderChart
         {
             var colors = _style.DataColors;
             colors.Reset();
-            foreach(var series in DataSource.DataSeries)
+            foreach (var series in DataSource.DataSeries)
             {
                 renderData(graphics, series, colors.Current);
                 colors.MoveNext();
@@ -176,43 +145,49 @@ namespace reGraph.Charting.SpiderChart
                     graphics.DrawLine(_style.ThinLineStyle.GetPen(chartMinSide), lastPoint, nextPoint);
                     lastPoint = nextPoint;
                 }
+
+                renderValueLabel(graphics, radPercent);
             }
+
+            renderValueLabel(graphics, 0);
+        }
+
+        private void renderValueLabel(Graphics graphics, float percentage)
+        {
+            var value = (DataSource.ScaledMaxValue - DataSource.MinValue) * percentage;
+            var point = getPointOnLine(0, percentage);
+            var text = value.ToString(_style.NumericFormat);
+            var measure = graphics.MeasureString(text, _style.DataCaptionFont);
+            var rectangle = new RectangleF(point.X, point.Y - (measure.Height / 2F), measure.Width, measure.Height);
+            graphics.DrawString(text, _style.DataCaptionFont, new SolidBrush(_style.TextColor), rectangle, new StringFormat { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Center });
         }
 
         private void renderAxis(Graphics graphics)
         {
-            var steps = 360F / pointCount;
-            for (int i = 0; i < steps; i++)
+            var steps = (2 * Math.PI) / pointCount;
+
+            for (double i = -HALF_PI; i < (HALF_PI * 3); i += steps)
             {
-                var angle = degreeToRadian(steps * i);
                 var middlePoint = chartMiddle;
-                var edgePoint = new PointF((float)(middlePoint.X + (Math.Cos(angle) * lineLength)), (float)(middlePoint.Y + (Math.Sin(angle) * lineLength)));
+                var edgePoint = new PointF((float)(middlePoint.X + (Math.Cos(i) * lineLength)), (float)(middlePoint.Y + (Math.Sin(i) * lineLength)));
                 graphics.DrawLine(_style.AxisLineStyle.GetPen(chartMinSide), middlePoint, edgePoint);
             }
         }
 
-        private double degreeToRadian(double angle)
-        {
-            return Math.PI * angle / 180.0;
-        }
-
-        public void SetDataSource(DataCollection source)
-        {
-            this.DataSource = source;
-        }
-
-        public void SetSize(int width, int heigth)
-        {
-            this.Width = width;
-            this.Height = heigth;
-        }
-
-        public void SetStyle(ChartStyle style)
+        public override void SetStyle(ChartStyle style)
         {
             if (style is SpiderChartStyle spiderStyle)
             {
+                base.SetStyle(style);
                 _style = spiderStyle;
             }
+        }
+
+        protected override void render(Graphics graphics)
+        {
+            renderAxis(graphics);
+            renderHelplines(graphics);
+            renderSeries(graphics);
         }
     }
 }

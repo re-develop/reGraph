@@ -19,11 +19,6 @@ namespace AeoGraphing.Charting.Styling
     public Measure AxisTicksLength { get; set; }
     public Measure AxisXPosition { get; set; }
     public Measure AxisYPosition { get; set; }
-    public Measure DataLabelsPosition { get; set; }
-    public Measure DataLabelPadding { get; set; }
-    public Measure DataLabelSquarePadding { get; set; }
-    public BorderedShapeStyle DataLabelSquare { get; set; }
-    public bool DrawDataLabels { get; set; }
   }
 
   [Flags]
