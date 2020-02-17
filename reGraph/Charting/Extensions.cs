@@ -51,6 +51,11 @@ namespace AeoGraphing.Charting
       g.FillRectangle(new SolidBrush(color), new RectangleF(new PointF(0, 0), size));
     }
 
+    public static void DrawCircle(this Graphics g, Pen pen, PointF center, float radius)
+    {
+      g.DrawCircle(pen, center.X, center.Y, radius);
+    }
+
     public static void DrawCircle(this Graphics g, Pen pen, float centerX, float centerY, float radius)
     {
       g.DrawEllipse(pen, centerX - radius, centerY - radius, radius + radius, radius + radius);
@@ -65,6 +70,43 @@ namespace AeoGraphing.Charting
     {
       return new PointF(rect.X + rect.Width, rect.Y);
     }
+
+    public static PointF TopLeft(this RectangleF rect)
+    {
+      return new PointF(rect.X, rect.Y);
+    }
+
+    public static PointF BottomRight(this RectangleF rect)
+    {
+      return new PointF(rect.X + rect.Width, rect.Y + rect.Height);
+    }
+
+    public static PointF BottomLeft(this RectangleF rect)
+    {
+      return new PointF(rect.X, rect.Y + rect.Height);
+    }
+
+
+    public static PointF TopCenter(this RectangleF rect)
+    {
+      return new PointF(rect.X + (rect.Width / 2), rect.Y);
+    }
+
+    public static PointF BottomCenter(this RectangleF rect)
+    {
+      return new PointF(rect.X + (rect.Width / 2), rect.Y + rect.Height);
+    }
+
+    public static PointF CenterLeft(this RectangleF rect)
+    {
+      return new PointF(rect.X, rect.Y + (rect.Height / 2));
+    }
+
+    public static PointF CenterRight(this RectangleF rect)
+    {
+      return new PointF(rect.X + rect.Width, rect.Y + (rect.Height / 2));
+    }
+
 
     public static Color Mix(this Color color, Color mixin)
     {
@@ -95,7 +137,7 @@ namespace AeoGraphing.Charting
 
       double r, g, b;
 
-      switch((int)(h / 60))
+      switch ((int)(h / 60))
       {
         case 0:
           r = c;

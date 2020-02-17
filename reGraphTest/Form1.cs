@@ -520,6 +520,33 @@ namespace AeoGraphingTest
       DrawValueLabelInBar = true
     };
 
+    public static SpiderChartStyle SpiderDarkStyle => new SpiderChartStyle()
+    {
+      Padding = 10,
+      TextColor = Color.WhiteSmoke,
+      BackgroundColor = Color.FromArgb(54, 57, 62),
+      TitleFont = new Font("Arial", 28),
+      DescriptionFont = new Font("Arial", 18),
+      AxisCaptionFont = new Font("Arial", 16),
+      DataCaptionFont = new Font("Arial", 14),
+      AxisLineStyle = new LineStyle { Color = Color.WhiteSmoke, Type = LineType.Solid, Width = 2 },
+      DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
+      DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.WhiteSmoke } },
+      DataCaptionPadding = 5,
+      DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
+      DataDotStyle = new BorderedShapeStyle { Color = Color.WhiteSmoke, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
+      NumericFormat = "0.00",
+      ThinLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Dashed, Width = 1 },
+      DrawTitle = true,
+      DrawDescription = true,
+      DrawDataLabels = true,
+      DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
+      DataLabelSquarePadding = 5,
+      DataColors = /*new PastelGenerator(Color.LightGray)*/new HarmonicContrastGenerator(0.5, 0.8, 80),
+      HeightPadding = 10,
+      WidthPadding = 10,
+    };
+
     private void BtnEditStyle_Click(object sender, EventArgs e)
     {
       var form = new EditStyleForm((ChartStyle)styleBox.SelectedItem);
