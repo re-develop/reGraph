@@ -540,11 +540,15 @@ namespace AeoGraphingTest
       DrawTitle = true,
       DrawDescription = true,
       DrawDataLabels = true,
-      DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
-      DataLabelSquarePadding = 5,
       DataColors = /*new PastelGenerator(Color.LightGray)*/new HarmonicContrastGenerator(0.5, 0.8, 80),
       HeightPadding = 10,
       WidthPadding = 10,
+      DataLabelPadding = new Measure(0.05F, MeasureType.Percentage),
+      DataLabelSquarePadding = 5,
+      FillAreaOfDataSeries = true,
+      AreaFillAlpha = 60,
+      AxisCaptionDistance = 0.01F,
+      DrawValueLabels = true
     };
 
     private void BtnEditStyle_Click(object sender, EventArgs e)

@@ -46,6 +46,7 @@ namespace reGraph.Charting.SpiderChart
       FillAreaOfDataSeries = true,
       AreaFillAlpha = 80,
       AxisCaptionDistance = 0.01F,
+      DrawValueLabels = true
     };
 
     public SpiderChart(DataCollection data, SpiderChartStyle style, int width, int height) : base(data, style, width, height)
@@ -54,10 +55,11 @@ namespace reGraph.Charting.SpiderChart
       this.ValueSteps = 0.1F;
     }
 
+
     private SpiderChartStyle _style;
     public override ChartStyle Style => _style;
 
-    protected int pointCount => DataSource.DataSeries.Max(x => x.DataPoints.Count);
+    protected int pointCount => DataSource.DataSeries.Min(x => x.DataPoints.Count);
     protected override float chartTop => base.chartTop + (_style.DrawDataLabels ? _style.DataLabelPadding.GetFloatValue(Height) : 0);
     protected float chartHeight => Height - (2 * _style.HeightPadding.GetFloatValue(this.Height)) - chartTop - (_style.DrawDataLabels ? _style.DataLabelPadding.GetFloatValue(Height) : 0);
     protected float chartWidth => Width - (2 * _style.WidthPadding.GetFloatValue(this.Width));
@@ -120,6 +122,7 @@ namespace reGraph.Charting.SpiderChart
       }
       graphics.DrawLine(pen, lastPoint, firstPoint);
       drawDataPoint(graphics, lastPoint, color);
+      drawDataPoint(graphics, firstPoint, color);
 
     }
 
