@@ -113,7 +113,7 @@ namespace reGraph.Charting
 
 
 
-    protected virtual void drawTitleAndDescription(Graphics ctx)
+    /*protected override void drawTitleAndDescription(Graphics ctx)
     {
       StringFormat stringFormat = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
       var color = new SolidBrush(style.TextColor);
@@ -123,7 +123,7 @@ namespace reGraph.Charting
       if (style.DrawDescription)
         ctx.DrawString(DataSource.Description, style.DescriptionFont, color, new PointF(paddedWidth / 2, titleHeight + (descriptionHeight / 2)), stringFormat);
 
-    }
+    }*/
 
 
 
