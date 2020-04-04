@@ -8,8 +8,10 @@ namespace reGraph.Charting.BarChart
   public class BarChartStyle : Chart2DStyle
   {
     public Measure BarGroupPadding { get; set; }
-    public Measure BarInGroupPadding { get; set; }
+    public Measure BarWidthPercentage { get; set; }
     public Measure MaxBarWidth { get; set; }
+    public Measure GroupLabelPadding { get; set; }
+    public bool DrawGroupLabel { get; set; }
     public bool DrawValueLabelAboveBar { get; set; }
   }
 }

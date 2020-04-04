@@ -41,27 +41,56 @@ namespace reGraph.Charting.BarChart
       DataLabelPadding = new Measure(0.01F, MeasureType.Percentage),
       DataLabelSquarePadding = 5,
       DataColors = new PastelGenerator(Color.LightGray),
-      MaxBarWidth = new Measure(0.03F, MeasureType.Percentage),
+      MaxBarWidth = new Measure(0.05F, MeasureType.Percentage),
       BarGroupPadding = new Measure(0.07F, MeasureType.Percentage),
-      BarInGroupPadding = new Measure(0.005F, MeasureType.Percentage),
+      BarWidthPercentage = new Measure(0.8F, MeasureType.Percentage),
       DrawValueLabelAboveBar = true,
+      GroupLabelPadding = new Measure(0.01F, MeasureType.Percentage),
+      DrawGroupLabel = true,
       StyleName = "DefaultStyle"
     };
 
     private BarChartStyle _style;
+    protected BarDataSource DataSource { get; set; }
+    protected Dictionary<int, Brush> seriesColorAtlas { get; set; } = new Dictionary<int, Brush>();
+
     public BarChart(DataCollection data, BarChartStyle style, int width, int height) : base(data, style, width, height)
     {
       _style = style;
+      this.DataSource = BarDataSource.ExampleData;
+      var gen = _style.DataColors;
+      gen.Reset();
+
+      foreach (var series in DataSource.Series)
+      {
+        seriesColorAtlas[series.Id] = new SolidBrush(gen.Current);
+        gen.MoveNext();
+      }
+    }
+
+
+    protected float totalGroupSpace => (chartRenderSpace - ((groupCount - 1) * _style.BarGroupPadding.GetFloatValue(chartRenderSpace)));
+    protected float barWidth => Math.Min(totalGroupSpace / DataSource.AllBars.Count(), _style.MaxBarWidth.GetFloatValue(chartRenderSpace));
+    protected float barOverflownSpace => DataSource.AllBars.Count() * Math.Max(0, (totalGroupSpace / DataSource.AllBars.Count()) - _style.MaxBarWidth.GetFloatValue(chartRenderSpace));
+    protected float totalSpaceBetweenGroups => ((groupCount - 1) * _style.BarGroupPadding.GetFloatValue(chartRenderSpace)) + barOverflownSpace;
+    protected float realSpaceBetweenGroups => totalSpaceBetweenGroups / (groupCount - 1);
+    protected float barRealWidth => _style.BarWidthPercentage.GetPercentageValue(barWidth);
+    protected float barOffeset => (barWidth - barRealWidth) / 2;
+    protected float groupNameHeight => paddedHeight - baseLinePos;
+
+    protected float getGroupWidth(BarGroup group)
+    {
+      return barWidth * group.Bars.Length;
     }
 
     private float chartRenderSpace => paddedWidth - valueLinePos;
-    private int groupCount => DataSource.DataSeries.Max(x => x.DataPoints.Count);
+    private int groupCount => DataSource.Groups.Count();
     private float groupSpace => (chartRenderSpace - ((groupCount - 1) * _style.BarGroupPadding.GetFloatValue(chartRenderSpace))) / groupCount;
-    private float barSpace => (groupSpace - ((DataSource.DataSeries.Count - 1) * _style.BarInGroupPadding.GetFloatValue(chartRenderSpace))) / DataSource.DataSeries.Count;
-    private float barWidth => Math.Min(_style.MaxBarWidth.GetFloatValue(chartRenderSpace), barSpace);
-    private float barOffset => (chartRenderSpace - requiredSpace) / 2;
+   // private float barSpace => (groupSpace - ((DataSource.Series.Length - 1) * _style.BarInGroupPadding.GetFloatValue(chartRenderSpace))) / DataSource.Series.Length;
+    // private float barWidth => Math.Min(_style.MaxBarWidth.GetFloatValue(chartRenderSpace), barSpace);
+    //private float barOffset => (chartRenderSpace - requiredSpace) / 2;
     // 3% Error dunno why but that fixes it, pls dont touch
-    private float requiredSpace => (chartRenderSpace * 0.03F) + ((groupCount - 1) * groupSpace) + ((groupCount - 1) * _style.BarGroupPadding.GetFloatValue(chartRenderSpace)) + ((DataSource.DataSeries.Count - 1) * barWidth) + ((DataSource.DataSeries.Count - 1) * (_style.BarInGroupPadding.GetFloatValue(chartRenderSpace)));
+    //private float requiredSpace => (chartRenderSpace * 0.03F) + ((groupCount - 1) * groupSpace) + ((groupCount - 1) * _style.BarGroupPadding.GetFloatValue(chartRenderSpace)) + ((DataSource.DataSeries.Count - 1) * barWidth) + ((DataSource.DataSeries.Count - 1) * (_style.BarInGroupPadding.GetFloatValue(chartRenderSpace)));
 
     protected override void drawBaseLabels(Graphics ctx)
     {
@@ -77,28 +106,7 @@ namespace reGraph.Charting.BarChart
       }
     }
 
-    private void drawBars(Graphics graphics, DataSeries series, int barNum, Color color)
-    {
-      var groupNum = 0;
-      var brush = new SolidBrush(color);
-      foreach (var point in series.DataPoints)
-      {
-        var x = (groupNum * groupSpace) + (groupNum * _style.BarGroupPadding.GetFloatValue(chartRenderSpace)) + (barNum * barWidth) + (barNum * (_style.BarInGroupPadding.GetFloatValue(chartRenderSpace))) + valueLinePos;
-        if (barSpace > barWidth)
-          x += barOffset;
-
-        var height = (float)(pixelPerValue * (point.Value - DataSource.MinValue));
-        var rect = new RectangleF(x, baseLinePos - height, barWidth, height);
-        graphics.FillRectangle(brush, rect);
-        drawBaseLabel(graphics, x + (barWidth / 2), point.BaseLabel);
-        if (_style.DrawValueLabelAboveBar && string.IsNullOrEmpty(point.ValueLabel) == false)
-          drawValueLabel(graphics, point.ValueLabel, rect);
-
-        groupNum++;
-      }
-    }
-
-
+ 
     private void drawValueLabel(Graphics graphics, String label, RectangleF bar)
     {
       var heigth = graphics.MeasureString(label, _style.DataCaptionFont).Height;
@@ -108,22 +116,59 @@ namespace reGraph.Charting.BarChart
     }
 
 
+
+    protected void drawGroupLabel(Graphics graphics, string label, float xStart, float xEnd)
+    {
+      var pad = _style.GroupLabelPadding.GetFloatValue(groupNameHeight);
+      var height = groupNameHeight - pad;
+      var y = baseLinePos + pad;
+      var rect = new RectangleF(xStart, y, xEnd - xStart, height);
+      var format = new StringFormat(StringFormatFlags.NoWrap) { Alignment = StringAlignment.Center };
+      graphics.DrawString(label, _style.DataCaptionFont, new SolidBrush(_style.TextColor), rect, format);
+    }
+
+
+    protected float drawGroup(Graphics graphics, BarGroup group, float offset)
+    {
+      var posx = offset;
+      foreach (var bar in group.Bars.OrderBy(x => Array.IndexOf(DataSource.Series, DataSource.Series.FirstOrDefault(y => y.Id == x.SeriesId) ?? DataSource.Series.First())))
+      {
+        var height = (float)(pixelPerValue * (bar.Value - base.DataSource.MinValue));   
+        var rect = new RectangleF(posx + barOffeset, baseLinePos - height, barRealWidth, height);
+        graphics.FillRectangle(seriesColorAtlas[bar.SeriesId], rect);
+        drawValueLabel(graphics, bar.Value.ToString(_style.NumericFormat), rect);
+        posx += barWidth;
+      }
+
+      if (_style.DrawGroupLabel && string.IsNullOrEmpty(group.Name) == false)
+        drawGroupLabel(graphics, group.Name, offset, posx);
+
+      return posx + realSpaceBetweenGroups;
+    }
+
+
     private void drawData(Graphics graphics)
     {
-      var cgen = _style.DataColors;
-      cgen.Reset();
-      int num = 0;
-      foreach (var series in DataSource.DataSeries)
+      //  var cgen = _style.DataColors;
+      //  cgen.Reset();
+      //  int num = 0;
+      //  foreach (var series in DataSource.DataSeries)
+      //  {
+      //    drawBars(graphics, series, num++, cgen.Current);
+      //    cgen.MoveNext();
+      //  }
+
+      float posx = valueLinePos;
+      foreach (var group in DataSource.Groups)
       {
-        drawBars(graphics, series, num++, cgen.Current);
-        cgen.MoveNext();
+        posx = drawGroup(graphics, group, posx);
       }
     }
 
     protected override void render(Graphics graphics)
     {
       drawData(graphics);
-      drawLines(graphics);
+      //drawLines(graphics);
     }
   }
 }

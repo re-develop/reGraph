@@ -15,6 +15,16 @@ namespace AeoGraphing.Charting.Styling
       this.Type = type;
     }
 
+
+    public float GetPercentageValue(float toScale)
+    {
+      if (Type == MeasureType.Percentage)
+        return toScale * Value;
+
+      return toScale;
+    }
+
+
     public float GetFloatValue(float toScale)
     {
       switch (Type)
