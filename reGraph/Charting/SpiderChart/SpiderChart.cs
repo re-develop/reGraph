@@ -120,10 +120,10 @@ namespace reGraph.Charting.SpiderChart
         drawDataPoint(graphics, lastPoint, color);
         lastPoint = nextPoint;
       }
+
       graphics.DrawLine(pen, lastPoint, firstPoint);
       drawDataPoint(graphics, lastPoint, color);
       drawDataPoint(graphics, firstPoint, color);
-
     }
 
 
