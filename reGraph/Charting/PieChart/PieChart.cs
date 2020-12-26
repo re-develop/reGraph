@@ -27,28 +27,21 @@ namespace reGraph.Charting.PieChart
       AxisLineStyle = new LineStyle { Color = Color.DarkGray, Type = LineType.Solid, Width = 2 },
       DataCaptionPadding = 5,
       NumericFormat = "0.00",
-      //ThinLineStyle = new LineStyle { Color = Color.LightGray, Type = LineType.Dashed, Width = 1 },
       DrawTitle = true,
       DrawDescription = true,
       StyleName = "DefaultStyle",
       HeightPadding = 10,
       WidthPadding = 10,
       DataColors = new PastelGenerator(Color.LightGray),
-      //DataConnectionLineStyle = new LineStyle { Color = Color.Transparent, Type = LineType.Solid, Width = 3 },
-      //DataDotStyle = new BorderedShapeStyle { Color = Color.DarkGray, Width = 3, Border = new ShapeStyle { Color = Color.Transparent, Width = 5 } },
       DrawDataLabels = true,
       DataLabelsPosition = new Measure(0.1F, MeasureType.Percentage),
       DataLabelSquare = new BorderedShapeStyle { Color = Color.Transparent, Width = 10, Border = new ShapeStyle { Width = 12, Color = Color.DarkGray } },
       DataLabelPadding = new Measure(0.05F, MeasureType.Percentage),
       DataLabelSquarePadding = 5,
-      //FillAreaOfDataSeries = true,
-      //AreaFillAlpha = 80,
-      //AxisCaptionDistance = 0.01F,
-      //DrawValueLabels = true,
       FullCircleDegrees = 320F,
       RenderCircleDescription = true,
       CircleInnerSpace = 0.2F
-    };
+    }; 
 
 
 
@@ -59,8 +52,8 @@ namespace reGraph.Charting.PieChart
     protected PointF chartMiddle => new PointF(Width / 2, (chartHeight / 2) + chartTop);
     protected int circleCount => DataSource.DataSeries.Max(x => x.DataPoints.Count); /* + (chartMinSide == 0F ? 0 : 1);*/
     protected float singleCircleRadius => ((chartMinSide / 2) * (1F - _style.CircleInnerSpace)) / circleCount;
-
     protected float rotateBy => 360F - _style.FullCircleDegrees;
+
 
 
     private PointF getPointOnLine(int circle, double angle)
@@ -77,6 +70,7 @@ namespace reGraph.Charting.PieChart
     {
       return (float)DataSource.DataSeries.Sum(x => x.DataPoints.Count > circle ? x.DataPoints[circle].Value : 0);
     }
+
 
 
     private float getPointAngle(DataPoint point, int circle)

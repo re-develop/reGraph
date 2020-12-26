@@ -19,7 +19,7 @@ namespace AeoGraphing.Charting
       this._v = v;
     }
 
-    public double H
+    public double H 
     {
       get { return this._h; }
       set { this._h = value; }

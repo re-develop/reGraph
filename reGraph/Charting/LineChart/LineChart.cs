@@ -4,6 +4,7 @@ using AeoGraphing.Data;
 using reGraph.Charting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -136,11 +137,14 @@ namespace AeoGraphing.Charting.LineChart
 
     private void drawDataPoints(Graphics ctx, DataSeries series, Color color)
     {
+      Debug.WriteLine("Render Series: " + series.Name);
       PointF? lastPoint = null;
       var pen = _style.DataConnectionLineStyle.GetPen(this.Width);
       pen.Color = pen.Color.ReplaceIfTransparent(color);
+      int i = 0;
       foreach (var point in series.DataPoints.OrderBy(x => x.BaseValue ?? 0))
       {
+        Debug.WriteLine($"Render Point {i}/{series.DataPoints.Count}");
         var y = (float)(baseLinePos - ((point.Value - DataSource.MinValue) * pixelPerValue));
         var x = (float)(pixelPerBaseValue * (point.BaseValue.Value - DataSource.MinBaseValue)) + valueLineWidth;
         var p = new PointF(x, y);
@@ -150,6 +154,7 @@ namespace AeoGraphing.Charting.LineChart
           drawDataPoint(ctx, lastPoint.Value, color);
         }
         lastPoint = p;
+        i++;
       }
 
       drawDataPoint(ctx, lastPoint.Value, color);
